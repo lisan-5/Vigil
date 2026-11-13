@@ -13,7 +13,7 @@ import {
 
 export interface NavItem {
   to:
-    | "/"
+    | "/overview"
     | "/logs"
     | "/metrics"
     | "/traces"
@@ -29,7 +29,7 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
-  { to: "/", label: "Overview", icon: Activity, key: "o" },
+  { to: "/overview", label: "Overview", icon: Activity, key: "o" },
   { to: "/logs", label: "Logs", icon: ScrollText, key: "l" },
   { to: "/metrics", label: "Metrics", icon: ChartLine, key: "m" },
   { to: "/traces", label: "Traces", icon: Waypoints, key: "t" },

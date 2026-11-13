@@ -35,7 +35,7 @@ export function Sidebar({
       )}
     >
       <Link
-        to="/"
+        to="/overview"
         onClick={onNavigate}
         className="mb-3 flex items-center gap-2 border-b-2 border-sidebar-border px-2 pb-3 pt-2"
         aria-label="Vigil home"
@@ -51,7 +51,7 @@ export function Sidebar({
         </span>
       </Link>
       {NAV.map((item) => {
-        const active = item.to === "/" ? path === "/" : path.startsWith(item.to);
+        const active = path.startsWith(item.to);
         const Icon = item.icon;
         const link = (
           <Link

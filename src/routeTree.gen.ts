@@ -14,6 +14,7 @@ import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as DashboardsRouteImport } from './routes/dashboards'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as OverviewRouteImport } from './routes/overview'
 import { Route as QueryRouteImport } from './routes/query'
 import { Route as ServiceMapRouteImport } from './routes/service-map'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -44,6 +45,11 @@ const LogsRoute = LogsRouteImport.update({
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OverviewRoute = OverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QueryRoute = QueryRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/dashboards': typeof DashboardsRoute
   '/logs': typeof LogsRoute
   '/metrics': typeof MetricsRoute
+  '/overview': typeof OverviewRoute
   '/query': typeof QueryRoute
   '/service-map': typeof ServiceMapRoute
   '/settings': typeof SettingsRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/dashboards': typeof DashboardsRoute
   '/logs': typeof LogsRoute
   '/metrics': typeof MetricsRoute
+  '/overview': typeof OverviewRoute
   '/query': typeof QueryRoute
   '/service-map': typeof ServiceMapRoute
   '/settings': typeof SettingsRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/dashboards': typeof DashboardsRoute
   '/logs': typeof LogsRoute
   '/metrics': typeof MetricsRoute
+  '/overview': typeof OverviewRoute
   '/query': typeof QueryRoute
   '/service-map': typeof ServiceMapRoute
   '/settings': typeof SettingsRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/dashboards'
     | '/logs'
     | '/metrics'
+    | '/overview'
     | '/query'
     | '/service-map'
     | '/settings'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/dashboards'
     | '/logs'
     | '/metrics'
+    | '/overview'
     | '/query'
     | '/service-map'
     | '/settings'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/dashboards'
     | '/logs'
     | '/metrics'
+    | '/overview'
     | '/query'
     | '/service-map'
     | '/settings'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   DashboardsRoute: typeof DashboardsRoute
   LogsRoute: typeof LogsRoute
   MetricsRoute: typeof MetricsRoute
+  OverviewRoute: typeof OverviewRoute
   QueryRoute: typeof QueryRoute
   ServiceMapRoute: typeof ServiceMapRoute
   SettingsRoute: typeof SettingsRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/metrics'
       fullPath: '/metrics'
       preLoaderRoute: typeof MetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/overview': {
+      id: '/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof OverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/query': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardsRoute: DashboardsRoute,
   LogsRoute: LogsRoute,
   MetricsRoute: MetricsRoute,
+  OverviewRoute: OverviewRoute,
   QueryRoute: QueryRoute,
   ServiceMapRoute: ServiceMapRoute,
   SettingsRoute: SettingsRoute,

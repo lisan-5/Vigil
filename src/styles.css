@@ -1,0 +1,368 @@
+/*
+ * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
+ * Keep every @import in this top block. Web fonts are loaded via <link> in __root.tsx.
+ */
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Vigil design system: a printed "night log". Paper-first; the `.dark` class on <html>
+ * switches to the reversed ink theme.
+ * Status colors are semantic (healthy / warning / critical / trace) and always paired with
+ * an icon or text in components so state is never conveyed by color alone.
+ */
+
+@theme inline {
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-archivo: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-plexmono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Landing page: printed "night log" palette — paper, ink, one signal red */
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-signal: var(--signal);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-healthy: var(--healthy);
+  --color-healthy-foreground: var(--healthy-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-critical: var(--critical);
+  --color-critical-foreground: var(--critical-foreground);
+  --color-trace: var(--trace);
+  --color-trace-foreground: var(--trace-foreground);
+  --color-info: var(--info);
+  --color-debug: var(--debug);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
+  --color-syntax-key: var(--syntax-key);
+  --color-syntax-value: var(--syntax-value);
+  --color-syntax-op: var(--syntax-op);
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+  --animate-row-in: row-in 600ms ease-out;
+  --animate-fade-up: fade-up 220ms ease-out;
+  --animate-blink: blink 1s steps(1) infinite;
+}
+
+/* Paper theme: Vigil's default — a printed night log. Warm paper, near-black ink, one signal red. */
+:root {
+  --radius: 0.125rem;
+  --background: oklch(0.958 0.011 84);
+  --foreground: oklch(0.19 0.012 60);
+  --surface: oklch(0.972 0.009 84);
+  --surface-2: oklch(0.93 0.014 82);
+  --card: oklch(0.972 0.009 84);
+  --card-foreground: oklch(0.19 0.012 60);
+  --popover: oklch(0.975 0.008 84);
+  --popover-foreground: oklch(0.19 0.012 60);
+  --primary: oklch(0.19 0.012 60);
+  --primary-foreground: oklch(0.958 0.011 84);
+  --secondary: oklch(0.925 0.014 82);
+  --secondary-foreground: oklch(0.19 0.012 60);
+  --muted: oklch(0.925 0.014 82);
+  --muted-foreground: oklch(0.46 0.014 60);
+  --accent: oklch(0.91 0.016 82);
+  --accent-foreground: oklch(0.19 0.012 60);
+  --destructive: oklch(0.585 0.2 32);
+  --destructive-foreground: oklch(0.98 0.008 84);
+  --border: oklch(0.19 0.012 60 / 16%);
+  --input: oklch(0.19 0.012 60 / 28%);
+  --ring: oklch(0.19 0.012 60);
+
+  /* Status inks: muted, printed. Red is reserved for "someone should get up". */
+  --healthy: oklch(0.47 0.07 150);
+  --healthy-foreground: oklch(0.98 0.008 84);
+  --warning: oklch(0.6 0.12 70);
+  --warning-foreground: oklch(0.19 0.012 60);
+  --critical: oklch(0.585 0.2 32);
+  --critical-foreground: oklch(0.98 0.008 84);
+  --trace: oklch(0.42 0.08 255);
+  --trace-foreground: oklch(0.98 0.008 84);
+  --info: oklch(0.45 0.07 245);
+  --debug: oklch(0.55 0.012 60);
+
+  --chart-1: oklch(0.19 0.012 60);
+  --chart-2: oklch(0.5 0.07 110);
+  --chart-3: oklch(0.6 0.12 70);
+  --chart-4: oklch(0.45 0.08 250);
+  --chart-5: oklch(0.5 0.08 150);
+  --chart-6: oklch(0.5 0.06 40);
+  --chart-7: oklch(0.45 0.08 330);
+  --chart-8: oklch(0.6 0.012 60);
+
+  --syntax-key: oklch(0.42 0.08 250);
+  --syntax-value: oklch(0.19 0.012 60);
+  --syntax-op: oklch(0.55 0.012 60);
+  --syntax-keyword: oklch(0.45 0.08 330);
+  --syntax-string: oklch(0.5 0.1 70);
+  --syntax-number: oklch(0.52 0.15 32);
+
+  --sidebar: oklch(0.945 0.012 83);
+  --sidebar-foreground: oklch(0.19 0.012 60);
+  --sidebar-primary: oklch(0.19 0.012 60);
+  --sidebar-primary-foreground: oklch(0.958 0.011 84);
+  --sidebar-accent: oklch(0.19 0.012 60);
+  --sidebar-accent-foreground: oklch(0.958 0.011 84);
+  --sidebar-border: oklch(0.19 0.012 60);
+  --sidebar-ring: oklch(0.19 0.012 60);
+
+  --shadow-panel: none;
+
+  /* Landing palette is theme-independent (it is a printed page) */
+  --paper: oklch(0.958 0.011 84);
+  --paper-2: oklch(0.93 0.014 82);
+  --ink: oklch(0.19 0.012 60);
+  --ink-muted: oklch(0.46 0.014 60);
+  --rule: oklch(0.19 0.012 60 / 16%);
+  --signal: oklch(0.585 0.2 32);
+}
+
+/* Ink theme (opt-in): the same printed log, reversed — paper-white type on warm black. No neon. */
+.dark {
+  --background: oklch(0.19 0.012 60);
+  --foreground: oklch(0.93 0.012 84);
+  --surface: oklch(0.215 0.012 60);
+  --surface-2: oklch(0.25 0.012 60);
+  --card: oklch(0.215 0.012 60);
+  --card-foreground: oklch(0.93 0.012 84);
+  --popover: oklch(0.23 0.012 60);
+  --popover-foreground: oklch(0.93 0.012 84);
+  --primary: oklch(0.93 0.012 84);
+  --primary-foreground: oklch(0.19 0.012 60);
+  --secondary: oklch(0.26 0.012 60);
+  --secondary-foreground: oklch(0.93 0.012 84);
+  --muted: oklch(0.26 0.012 60);
+  --muted-foreground: oklch(0.68 0.012 70);
+  --accent: oklch(0.28 0.012 60);
+  --accent-foreground: oklch(0.95 0.01 84);
+  --destructive: oklch(0.64 0.19 32);
+  --destructive-foreground: oklch(0.98 0.008 84);
+  --border: oklch(0.93 0.012 84 / 16%);
+  --input: oklch(0.93 0.012 84 / 28%);
+  --ring: oklch(0.93 0.012 84);
+
+  --healthy: oklch(0.72 0.07 150);
+  --healthy-foreground: oklch(0.19 0.012 60);
+  --warning: oklch(0.78 0.11 75);
+  --warning-foreground: oklch(0.19 0.012 60);
+  --critical: oklch(0.64 0.19 32);
+  --critical-foreground: oklch(0.98 0.008 84);
+  --trace: oklch(0.72 0.07 250);
+  --trace-foreground: oklch(0.19 0.012 60);
+  --info: oklch(0.72 0.07 245);
+  --debug: oklch(0.58 0.012 70);
+
+  --chart-1: oklch(0.93 0.012 84);
+  --chart-2: oklch(0.72 0.07 110);
+  --chart-3: oklch(0.78 0.11 75);
+  --chart-4: oklch(0.72 0.07 250);
+  --chart-5: oklch(0.72 0.07 150);
+  --chart-6: oklch(0.68 0.06 40);
+  --chart-7: oklch(0.7 0.07 330);
+  --chart-8: oklch(0.6 0.012 70);
+
+  --syntax-key: oklch(0.75 0.07 250);
+  --syntax-value: oklch(0.93 0.012 84);
+  --syntax-op: oklch(0.6 0.012 70);
+  --syntax-keyword: oklch(0.72 0.08 330);
+  --syntax-string: oklch(0.8 0.1 75);
+  --syntax-number: oklch(0.72 0.14 32);
+
+  --sidebar: oklch(0.17 0.012 60);
+  --sidebar-foreground: oklch(0.93 0.012 84);
+  --sidebar-primary: oklch(0.93 0.012 84);
+  --sidebar-primary-foreground: oklch(0.19 0.012 60);
+  --sidebar-accent: oklch(0.93 0.012 84);
+  --sidebar-accent-foreground: oklch(0.19 0.012 60);
+  --sidebar-border: oklch(0.93 0.012 84 / 40%);
+  --sidebar-ring: oklch(0.93 0.012 84);
+
+  --shadow-panel: none;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--signal);
+    color: var(--paper);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes row-in {
+  from {
+    background-color: color-mix(in oklab, var(--warning) 10%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes pulse-trace {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+/* Panels: the standard surface used across Vigil */
+@utility panel {
+  background-color: var(--surface);
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Small uppercase section label */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+/* Tabular numbers for metrics */
+@utility num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Keyboard hint */
+@utility kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 0;
+  border: 1px solid var(--input);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+/* Animated flowing dashes for the service map edges */
+@utility edge-flow {
+  stroke-dasharray: 6 10;
+  animation: pulse-trace 1.6s linear infinite;
+}
+
+/* Landing: condensed poster type (Archivo's width axis) */
+@utility condensed {
+  font-stretch: 62%;
+}
+@utility semi-condensed {
+  font-stretch: 80%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

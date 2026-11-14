@@ -94,6 +94,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Real-time logs, metrics, traces and alerts in one calm place.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://vigilog.vercel.app" },
+      { property: "og:site_name", content: "Vigil" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

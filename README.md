@@ -2,6 +2,8 @@
 
 **Always watching. Rarely loud.** A calm, real-time observability console for logs, metrics, traces and alerts.
 
+**Website:** https://vigilog.vercel.app
+
 Built with [TanStack Start](https://tanstack.com/start) (React 19, SSR), Tailwind CSS v4, Radix UI primitives, TanStack Query and Recharts. Point it at your backend with `VITE_VIGIL_API_URL` / `VITE_VIGIL_WS_URL`; without them it runs on a built-in in-browser data source.
 
 ## Getting started

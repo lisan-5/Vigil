@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { MotionConfig, motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { EASE, FadeUp, MaskLine } from "@/components/landing/motion";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -111,13 +113,15 @@ function useNight() {
 
 function Landing() {
   return (
-    <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
-      <Night />
-      <Inside />
-      <Parts />
-      <Rules />
-      <Closing />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
+        <Night />
+        <Inside />
+        <Parts />
+        <Rules />
+        <Closing />
+      </div>
+    </MotionConfig>
   );
 }
 
@@ -131,7 +135,12 @@ function Night() {
   return (
     <section>
       {/* masthead */}
-      <header className={cn(wrap, "pt-5")}>
+      <motion.header
+        className={cn(wrap, "pt-5")}
+        initial={{ opacity: 0, y: -24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: EASE }}
+      >
         <div className="flex items-center justify-between gap-4 border-b-2 border-ink pb-3">
           <Link to="/" className="flex items-baseline gap-2">
             <span className="condensed text-3xl font-black uppercase leading-none tracking-tight">
@@ -176,18 +185,16 @@ function Night() {
             {hhmm(m)} — {st.label}
           </span>
         </div>
-      </header>
+      </motion.header>
 
       {/* headline */}
       <div className={cn(wrap, "grid gap-8 pb-10 pt-12 md:grid-cols-12 md:gap-6 md:pt-16")}>
         <h1 className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8">
-          Nothing
-          <br />
-          happened
-          <br />
-          last night.
+          <MaskLine delay={0.15}>Nothing</MaskLine>
+          <MaskLine delay={0.27}>happened</MaskLine>
+          <MaskLine delay={0.39}>last night.</MaskLine>
         </h1>
-        <div className="flex flex-col justify-end md:col-span-4">
+        <FadeUp delay={0.65} className="flex flex-col justify-end md:col-span-4">
           <p className="text-lg leading-snug text-ink md:text-[1.2rem]">
             Well — something did. At 02:14 payments started timing out. Vigil noticed in eleven
             seconds, woke{" "}
@@ -199,9 +206,12 @@ function Night() {
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link
               to="/overview"
-              className="bg-ink px-5 py-3 text-sm font-semibold text-paper transition-opacity hover:opacity-85"
+              className="group bg-ink px-5 py-3 text-sm font-semibold text-paper transition-opacity hover:opacity-85"
             >
-              Open Vigil →
+              Open Vigil{" "}
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
+                →
+              </span>
             </Link>
             <a
               href="#inside"
@@ -210,11 +220,11 @@ function Night() {
               read the incident ↓
             </a>
           </div>
-        </div>
+        </FadeUp>
       </div>
 
       {/* the chart recorder */}
-      <div className={wrap}>
+      <FadeUp delay={0.9} y={32} className={wrap}>
         <div
           className={cn(
             mono,
@@ -230,7 +240,7 @@ function Night() {
           </button>
         </div>
         <Recorder m={m} setScrub={setScrub} />
-      </div>
+      </FadeUp>
     </section>
   );
 }
@@ -806,9 +816,12 @@ function Closing() {
         <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link
             to="/overview"
-            className="bg-paper px-5 py-3 text-sm font-semibold text-ink transition-opacity hover:opacity-85"
+            className="group bg-paper px-5 py-3 text-sm font-semibold text-ink transition-opacity hover:opacity-85"
           >
-            Open Vigil →
+            Open Vigil{" "}
+            <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
+              →
+            </span>
           </Link>
           <Link
             to="/logs"

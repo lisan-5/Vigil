@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MotionConfig, motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EASE, FadeUp, MaskLine } from "@/components/landing/motion";
+import { Smoke } from "@/components/landing/Smoke";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -133,7 +134,11 @@ function Night() {
   const st = statusAt(m);
 
   return (
-    <section>
+    <section className="relative isolate">
+      <Smoke
+        intensity={0.3}
+        className="-z-10 [mask-image:linear-gradient(to_bottom,transparent_0%,black_12%,black_80%,transparent_100%)]"
+      />
       {/* masthead */}
       <motion.header
         className={cn(wrap, "pt-5")}
@@ -805,7 +810,12 @@ function Rules() {
 
 function Closing() {
   return (
-    <footer className="mt-24 bg-ink text-paper sm:mt-32">
+    <footer className="relative isolate mt-24 overflow-hidden bg-ink text-paper sm:mt-32">
+      <Smoke
+        rgb="243,238,228"
+        intensity={0.35}
+        className="-z-10 [mask-image:linear-gradient(to_top,black_40%,transparent_100%)]"
+      />
       <div className={cn(wrap, "pb-10 pt-16 sm:pt-24")}>
         <p className={cn(mono, "text-[12px] opacity-60")}>06:00 — end of shift</p>
         <h2 className="condensed mt-4 text-[clamp(3.6rem,13vw,11rem)] font-extrabold uppercase leading-[0.84]">

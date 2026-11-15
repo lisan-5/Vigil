@@ -3,7 +3,7 @@
  * Every effect honours prefers-reduced-motion via the <MotionConfig reducedMotion="user">
  * wrapper on the page.
  */
-import { motion, type HTMLMotionProps } from "motion/react";
+import { motion, useScroll, useSpring, type HTMLMotionProps } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -52,5 +52,58 @@ export function FadeUp({
     >
       {children}
     </motion.div>
+  );
+}
+
+/** Reveals once when scrolled into view. */
+export function Reveal({
+  delay = 0,
+  x = 0,
+  y = 28,
+  className,
+  children,
+  ...rest
+}: { delay?: number; x?: number; y?: number } & HTMLMotionProps<"div">) {
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, x, y }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -12% 0px" }}
+      transition={{ duration: 0.9, ease: EASE, delay }}
+      {...rest}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Display line that slides up from a mask when scrolled into view. */
+export function RevealLine({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span className={cn("block overflow-hidden pb-[0.06em]", className)}>
+      <motion.span
+        className="block"
+        initial={{ y: "105%" }}
+        whileInView={{ y: "0%" }}
+        viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+        transition={{ duration: 1, ease: EASE }}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
+/** Thin signal-red bar across the top that tracks reading progress. */
+export function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.3 });
+  return (
+    <motion.div
+      aria-hidden
+      className="fixed inset-x-0 top-0 z-50 h-[3px] origin-left bg-signal"
+      style={{ scaleX }}
+    />
   );
 }

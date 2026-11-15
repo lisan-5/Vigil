@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MotionConfig, motion } from "motion/react";
+import { MotionConfig, motion, useScroll, useTransform } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { EASE, FadeUp, MaskLine } from "@/components/landing/motion";
+import { EASE, FadeUp, MaskLine, RevealLine, ScrollProgress } from "@/components/landing/motion";
 import { Smoke } from "@/components/landing/Smoke";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +116,7 @@ function Landing() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
+        <ScrollProgress />
         <Night />
         <Inside />
         <Parts />
@@ -132,9 +133,14 @@ const mono = "font-plexmono";
 function Night() {
   const { m, scrubbing, setScrub, restart } = useNight();
   const st = statusAt(m);
+  // Parallax: as the hero scrolls away the headline drifts up and fades a little.
+  const hero = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: hero, offset: ["start start", "end start"] });
+  const headY = useTransform(scrollYProgress, [0, 1], [0, -140]);
+  const headO = useTransform(scrollYProgress, [0, 0.7], [1, 0.15]);
 
   return (
-    <section className="relative isolate">
+    <section ref={hero} className="relative isolate">
       <Smoke
         intensity={0.3}
         className="-z-10 [mask-image:linear-gradient(to_bottom,transparent_0%,black_12%,black_80%,transparent_100%)]"
@@ -194,11 +200,14 @@ function Night() {
 
       {/* headline */}
       <div className={cn(wrap, "grid gap-8 pb-10 pt-12 md:grid-cols-12 md:gap-6 md:pt-16")}>
-        <h1 className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8">
+        <motion.h1
+          style={{ y: headY, opacity: headO }}
+          className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8"
+        >
           <MaskLine delay={0.15}>Nothing</MaskLine>
           <MaskLine delay={0.27}>happened</MaskLine>
           <MaskLine delay={0.39}>last night.</MaskLine>
-        </h1>
+        </motion.h1>
         <FadeUp delay={0.65} className="flex flex-col justify-end md:col-span-4">
           <p className="text-lg leading-snug text-ink md:text-[1.2rem]">
             Well — something did. At 02:14 payments started timing out. Vigil noticed in eleven
@@ -508,9 +517,13 @@ function Inside() {
         aside="Five minutes, six entries. This is the whole incident."
       />
       <ol className="border-t-2 border-ink">
-        {ENTRIES.map((e) => (
-          <li
+        {ENTRIES.map((e, i) => (
+          <motion.li
             key={e.t}
+            initial={{ opacity: 0, x: -40, y: 0 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+            transition={{ duration: 0.8, ease: EASE, delay: i * 0.07 }}
             className="grid gap-x-6 gap-y-1 border-b border-rule py-5 md:grid-cols-12 md:items-baseline"
           >
             <span
@@ -534,7 +547,7 @@ function Inside() {
               {e.line}
             </code>
             <span className="text-[15px] leading-snug text-ink-muted md:col-span-4">{e.note}</span>
-          </li>
+          </motion.li>
         ))}
       </ol>
     </section>
@@ -546,7 +559,7 @@ function SectionHead({ n, title, aside }: { n: string; title: string; aside: str
     <div className="grid gap-3 pb-6 md:grid-cols-12 md:items-end md:gap-6">
       <span className={cn(mono, "text-[12px] text-ink-muted md:col-span-2")}>§ {n}</span>
       <h2 className="condensed text-[clamp(2.4rem,6vw,4.5rem)] font-extrabold uppercase leading-[0.9] md:col-span-6">
-        {title}
+        <RevealLine>{title}</RevealLine>
       </h2>
       <p className="max-w-sm text-[15px] leading-snug text-ink-muted md:col-span-4">{aside}</p>
     </div>
@@ -731,8 +744,12 @@ function Parts() {
       </div>
       <ol className="border-t-2 border-ink md:border-t">
         {PARTS.map((p, i) => (
-          <li
+          <motion.li
             key={p.name}
+            initial={{ opacity: 0, x: i % 2 ? 70 : -70, y: 0 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+            transition={{ duration: 0.8, ease: EASE, delay: 0.05 }}
             className="group grid gap-x-6 gap-y-3 border-b border-rule py-6 md:grid-cols-12 md:items-center"
           >
             <span className={cn(mono, "text-[12px] text-ink-muted md:col-span-1")}>0{i + 1}</span>
@@ -746,7 +763,7 @@ function Parts() {
               {p.does}
             </p>
             <div className="border border-rule bg-paper-2 p-3 md:col-span-4">{p.shows}</div>
-          </li>
+          </motion.li>
         ))}
       </ol>
     </section>
@@ -780,8 +797,12 @@ function Rules() {
       />
       <ol className="grid border-t-2 border-ink md:grid-cols-3">
         {RULES.map(([rule, why], i) => (
-          <li
+          <motion.li
             key={rule}
+            initial={{ opacity: 0, x: 0, y: 48 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+            transition={{ duration: 0.8, ease: EASE, delay: i * 0.14 }}
             className={cn(
               "border-b border-rule py-8 md:border-b-0 md:py-10",
               i > 0 && "md:border-l md:pl-8",
@@ -799,7 +820,7 @@ function Rules() {
               )}
             </p>
             <p className="mt-4 text-[15px] leading-snug text-ink-muted">{why}</p>
-          </li>
+          </motion.li>
         ))}
       </ol>
     </section>
@@ -819,9 +840,8 @@ function Closing() {
       <div className={cn(wrap, "pb-10 pt-16 sm:pt-24")}>
         <p className={cn(mono, "text-[12px] opacity-60")}>06:00 — end of shift</p>
         <h2 className="condensed mt-4 text-[clamp(3.6rem,13vw,11rem)] font-extrabold uppercase leading-[0.84]">
-          Go back
-          <br />
-          to sleep.
+          <RevealLine>Go back</RevealLine>
+          <RevealLine>to sleep.</RevealLine>
         </h2>
         <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link

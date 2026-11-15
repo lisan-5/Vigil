@@ -97,6 +97,7 @@
   --animate-row-in: row-in 600ms ease-out;
   --animate-fade-up: fade-up 220ms ease-out;
   --animate-blink: blink 1s steps(1) infinite;
+  --animate-marquee: marquee 60s linear infinite;
 }
 
 /* Paper theme: Vigil's default — a printed night log. Warm paper, near-black ink, one signal red. */
@@ -292,6 +293,14 @@
     transform: translateY(0);
   }
 }
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 @keyframes blink {
   50% {
     opacity: 0;
@@ -347,6 +356,12 @@
 @utility edge-flow {
   stroke-dasharray: 6 10;
   animation: pulse-trace 1.6s linear infinite;
+}
+
+/* Landing: hollow display type */
+@utility outline-type {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
 }
 
 /* Landing: condensed poster type (Archivo's width axis) */

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MotionConfig, motion, useScroll, useTransform } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EASE, FadeUp, MaskLine, RevealLine, ScrollProgress } from "@/components/landing/motion";
+import { ScrollSlide, Ticker } from "@/components/landing/Marquee";
 import { Smoke } from "@/components/landing/Smoke";
 import { cn } from "@/lib/utils";
 
@@ -118,9 +119,14 @@ function Landing() {
       <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
         <ScrollProgress />
         <Night />
+        <LogBand />
         <Inside />
         <Parts />
         <Rules />
+        <ScrollSlide
+          text="Always watching · Rarely loud ·"
+          className="condensed mt-24 select-none text-[clamp(4rem,14vw,12rem)] font-extrabold uppercase leading-none text-ink outline-type sm:mt-32"
+        />
         <Closing />
       </div>
     </MotionConfig>
@@ -467,6 +473,35 @@ function Note({
     >
       {children}
     </p>
+  );
+}
+
+/* ───────────────────────── the night, scrolling past ───────────────────────── */
+
+const BAND = [
+  "22:00:00 shift start · 8 services green",
+  "23:40:12 deploy checkout v412",
+  "00:31:07 p95 api-gateway 14ms",
+  "01:50:44 deploy payments v88",
+  "02:14:14 ALERT payments error_rate 1.3%",
+  "02:17:02 rollback payments v88 → v87",
+  "02:19:30 RESOLVED payments 0.3%",
+  "03:02:55 search cache warm 98.2%",
+  "05:12:00 nightly batch · expected",
+  "06:00:00 shift over · 1 page, 5 minutes",
+];
+
+function LogBand() {
+  return (
+    <div className={cn(mono, "mt-16 border-y-2 border-ink py-3 text-[12px] sm:mt-20")}>
+      <Ticker
+        items={BAND}
+        seconds={55}
+        render={(line) => (
+          <span className={line.includes("ALERT") ? "text-signal" : undefined}>{line}</span>
+        )}
+      />
+    </div>
   );
 }
 

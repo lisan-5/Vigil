@@ -4,7 +4,9 @@ import { vigil } from "@/api";
 import { SERVICE_NAMES, type ServiceName } from "@/api/types";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { PageHeader, Panel } from "@/components/common/PageHeader";
+import { ServiceDetail } from "@/components/service-map/ServiceDetail";
 import { ServiceGraph } from "@/components/service-map/ServiceGraph";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestTick, useLive } from "@/stores/live";
 
@@ -43,6 +45,10 @@ function ServiceMap() {
     refetchInterval: 2000,
   });
 
+  const select = (s: ServiceName | undefined) =>
+    navigate({ search: { service: s }, replace: true });
+  const detail = service && services.data?.find((s) => s.name === service);
+
   return (
     <div className="mx-auto max-w-[1600px] p-4 lg:p-6">
       <PageHeader
@@ -50,22 +56,37 @@ function ServiceMap() {
         description="Who calls whom, right now. Line weight is traffic; colour is the health of the callee."
         actions={<Legend />}
       />
-      <Panel title={`${SERVICE_NAMES.length} services · ${edges.data?.length ?? "—"} dependencies`}>
-        <ErrorBoundary label="service-graph">
-          {services.data && edges.data ? (
-            <ServiceGraph
-              services={services.data}
+      <div className={cn("grid items-start gap-3", detail && "xl:grid-cols-[minmax(0,1fr)_360px]")}>
+        <Panel
+          title={`${SERVICE_NAMES.length} services · ${edges.data?.length ?? "—"} dependencies`}
+        >
+          <ErrorBoundary label="service-graph">
+            {services.data && edges.data ? (
+              <ServiceGraph
+                services={services.data}
+                edges={edges.data}
+                snapshots={tick?.services}
+                alerts={alerts}
+                selected={service}
+                onSelect={select}
+              />
+            ) : (
+              <Skeleton className="m-3 aspect-[1000/560]" />
+            )}
+          </ErrorBoundary>
+        </Panel>
+        {detail && edges.data && (
+          <ErrorBoundary label="service-detail">
+            <ServiceDetail
+              key={detail.name}
+              service={detail}
               edges={edges.data}
-              snapshots={tick?.services}
-              alerts={alerts}
-              selected={service}
-              onSelect={(s) => navigate({ search: { service: s }, replace: true })}
+              onSelect={select}
+              onClose={() => select(undefined)}
             />
-          ) : (
-            <Skeleton className="m-3 aspect-[1000/560]" />
-          )}
-        </ErrorBoundary>
-      </Panel>
+          </ErrorBoundary>
+        )}
+      </div>
     </div>
   );
 }

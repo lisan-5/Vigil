@@ -20,6 +20,7 @@ import { SERVICE_NAMES } from "../types";
 import type { AlertStreamEvent, IncidentStreamEvent } from "../client";
 import { CALLERS, SERVICES, SERVICE_INDEX } from "./catalog";
 import { clamp, hash2, valueNoise } from "./random";
+import { metricValue } from "@/lib/metrics";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -33,26 +34,7 @@ function smoothstep(x: number) {
   return c * c * (3 - 2 * c);
 }
 
-export function metricValue(s: ServiceSnapshot, metric: MetricName): number {
-  switch (metric) {
-    case "requests.rate":
-      return s.rps;
-    case "errors.rate":
-      return s.errorRate * 100;
-    case "latency.avg":
-      return s.p50 * 1.18;
-    case "latency.p50":
-      return s.p50;
-    case "latency.p95":
-      return s.p95;
-    case "latency.p99":
-      return s.p99;
-    case "cpu.usage":
-      return s.cpu;
-    case "memory.usage":
-      return s.memory;
-  }
-}
+export { metricValue };
 
 let idCounter = 0;
 export const nextId = (prefix: string) =>

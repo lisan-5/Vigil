@@ -47,6 +47,8 @@ export class MockWorld {
   channels: NotificationChannel[] = [];
   apiKeys: ApiKey[] = [];
   private simulatedCount = 0;
+  /** When the autopilot may start the next organic incident (0 = not scheduled yet). */
+  private nextIncidentAt = 0;
   private alertListeners = new Set<Listener<AlertStreamEvent>>();
   private incidentListeners = new Set<Listener<IncidentStreamEvent>>();
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -144,7 +146,7 @@ export class MockWorld {
       "ledger",
       "notifications",
     ];
-    // The first simulated incident always hits payments — the most dramatic cascade for a demo.
+    // The first incident always hits payments — it has the deepest upstream cascade.
     const target =
       service ??
       (this.simulatedCount === 0
@@ -186,7 +188,7 @@ export class MockWorld {
     for (const rule of this.rules) {
       if (!rule.enabled) continue;
       const services = rule.service === "*" ? SERVICE_NAMES : [rule.service];
-      // The mock compresses evaluation windows to at most 20s so the demo reacts quickly.
+      // The mock compresses evaluation windows to at most 20s so the UI reacts quickly.
       const windowMs = Math.min(rule.windowSec, 20) * 1000;
       for (const service of services) {
         let sum = 0;
@@ -280,9 +282,26 @@ export class MockWorld {
   ensureRunning() {
     if (this.timer || typeof window === "undefined") return;
     this.timer = setInterval(() => {
+      this.autopilot();
       this.evaluate();
       this.checkIncidentEnds();
     }, 2_000);
+  }
+
+  /**
+   * Production is never perfectly quiet. Shortly after start-up, and then every few
+   * minutes, one service has a brief bad spell: errors climb, latency cascades upstream,
+   * alerts fire, and it recovers on its own.
+   */
+  private autopilot(now = Date.now()) {
+    if (!this.nextIncidentAt) {
+      this.nextIncidentAt = now + 40_000 + Math.random() * 20_000;
+      return;
+    }
+    if (now < this.nextIncidentAt || this.activeIncidents(now).length) return;
+    const duration = 70_000 + Math.random() * 50_000;
+    this.simulateIncident(undefined, duration);
+    this.nextIncidentAt = now + duration + 4 * MIN + Math.random() * 4 * MIN;
   }
 
   /* ------------------------------ seed data ------------------------------ */

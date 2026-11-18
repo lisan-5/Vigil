@@ -47,10 +47,13 @@ src/
 
 ## Features
 
-- **Overview** — fleet health at a glance
-- **Logs** — live-tailing, virtualised log stream with filters and JSON inspection
+- **Landing page** (`/`) — animated hero, drifting smoke, scroll-driven reveals and a sliding log ticker (Motion)
+- **Overview** (`/overview`) — fleet health at a glance: KPIs, throughput, incidents, per-service health
+- **Logs** — real-time, virtualised log stream with filters and JSON inspection
 - **Traces** — trace list and waterfall detail view
-- **Command palette** (`Ctrl/⌘ K`), keyboard shortcuts (`?`), guided tour
-- **Incident banner** — active incidents surface across every page, one click to the error logs
+- **Service map** — live dependency graph with animated traffic, health colouring and a detail panel per service
+- **Alerts** — filterable alert list with a live metric chart, state timeline and acknowledge / resolve
+- **Incidents** — active incidents surface across every page, one click to the error logs
+- **Command palette** (`Ctrl/⌘ K`), keyboard shortcuts (`?`), guided tour, light and dark themes
 
 See [roadmap.md](roadmap.md) for what's next.

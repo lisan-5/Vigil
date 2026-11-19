@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MotionConfig, motion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  AnimatePresence,
+  MotionConfig,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+  type MotionStyle,
+} from "motion/react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { EASE, FadeUp, MaskLine, RevealLine, ScrollProgress } from "@/components/landing/motion";
+import { Grain, TorchField } from "@/components/landing/Torch";
 import { ScrollSlide, Ticker } from "@/components/landing/Marquee";
 import { Smoke } from "@/components/landing/Smoke";
 import { cn } from "@/lib/utils";
@@ -31,7 +40,6 @@ export const Route = createFileRoute("/")({
 
 const NIGHT = 480; // minutes, 22:00 → 06:00
 const SPIKE = 254; // 02:14
-const FIXED = 259; // 02:19
 const Y_MAX = 3; // % error rate
 const W = 1000;
 const H = 300;
@@ -74,42 +82,31 @@ const ERR_PATH = toPath(POINTS.map((p) => ({ m: p.m, y: Y(p.v) })));
 const SPIKE_PATH = toPath(POINTS.filter((p) => p.v > 1).map((p) => ({ m: p.m, y: Y(p.v) })));
 const TRAFFIC_PATH = toPath(POINTS.map((p) => ({ m: p.m, y: Y(p.traffic) })));
 
-type Status = { label: string; loud: boolean };
-function statusAt(m: number): Status {
-  if (m >= SPIKE && m < SPIKE + 1.2) return { label: "Alert fired · payments", loud: true };
-  if (m >= SPIKE && m < FIXED) return { label: "Paging Dana · payments", loud: true };
-  if (m >= FIXED && m < FIXED + 10) return { label: "Rolled back · settling", loud: false };
-  if (m >= NIGHT) return { label: "Shift over · 1 page, 5 minutes", loud: false };
-  return { label: "All quiet", loud: false };
-}
+/* ───────────────────────── palettes ───────────────────────── */
 
-/** Replays the night like a chart recorder. Starts at 22:00 so server and client render the same frame. */
-function useNight() {
-  const [m, setM] = useState(0);
-  const [scrub, setScrub] = useState<number | null>(null);
-  const start = useRef(0);
-  const restart = () => (start.current = performance.now());
+/** The landing page is a printed log. At night the print is reversed. */
+const NIGHT_INK = {
+  paper: "#16120f",
+  paper2: "#201b17",
+  ink: "#efe8dc",
+  muted: "#9b9187",
+  rule: "rgba(239,232,220,0.14)",
+};
+const NIGHT_VARS = {
+  "--paper": NIGHT_INK.paper,
+  "--paper-2": NIGHT_INK.paper2,
+  "--ink": NIGHT_INK.ink,
+  "--ink-muted": NIGHT_INK.muted,
+  "--rule": NIGHT_INK.rule,
+} as CSSProperties;
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setM(NIGHT);
-      return;
-    }
-    const DUR = 24000;
-    const HOLD = 5000;
-    let raf = 0;
-    start.current = performance.now();
-    const loop = (now: number) => {
-      const e = (now - start.current) % (DUR + HOLD);
-      setM(Math.min(NIGHT, (e / DUR) * NIGHT));
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  return { m: scrub ?? m, scrubbing: scrub !== null, setScrub, restart };
-}
+const DAWN = {
+  paper: "#f4efe6",
+  paper2: "#ebe4d8",
+  ink: "#1c1814",
+  muted: "#665d54",
+  rule: "rgba(28,24,20,0.16)",
+};
 
 /* ───────────────────────── page ───────────────────────── */
 
@@ -117,10 +114,11 @@ function Landing() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
+        <Grain />
         <ScrollProgress />
-        <Night />
+        <Hero />
+        <Shift />
         <LogBand />
-        <Inside />
         <Parts />
         <Rules />
         <ScrollSlide
@@ -136,92 +134,99 @@ function Landing() {
 const wrap = "mx-auto w-full max-w-[1240px] px-5 sm:px-8";
 const mono = "font-plexmono";
 
-function Night() {
-  const { m, scrubbing, setScrub, restart } = useNight();
-  const st = statusAt(m);
-  // Parallax: as the hero scrolls away the headline drifts up and fades a little.
-  const hero = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: hero, offset: ["start start", "end start"] });
-  const headY = useTransform(scrollYProgress, [0, 1], [0, -140]);
-  const headO = useTransform(scrollYProgress, [0, 0.7], [1, 0.15]);
+/* ───────────────────────── 22:00 — the hero ───────────────────────── */
 
+function Masthead({ status }: { status: ReactNode }) {
   return (
-    <section ref={hero} className="relative isolate">
-      <Smoke
-        intensity={0.3}
-        className="-z-10 [mask-image:linear-gradient(to_bottom,transparent_0%,black_12%,black_80%,transparent_100%)]"
-      />
-      {/* masthead */}
-      <motion.header
-        className={cn(wrap, "pt-5")}
-        initial={{ opacity: 0, y: -24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: EASE }}
-      >
-        <div className="flex items-center justify-between gap-4 border-b-2 border-ink pb-3">
-          <Link to="/" className="flex items-baseline gap-2">
-            <span className="condensed text-3xl font-black uppercase leading-none tracking-tight">
-              Vigil
-            </span>
-            <span className={cn(mono, "hidden text-[11px] text-ink-muted sm:inline")}>
-              night log no. 0412
-            </span>
-          </Link>
-          <nav className={cn(mono, "flex items-center gap-5 text-[12px]")}>
-            <a href="#inside" className="hidden underline-offset-4 hover:underline md:inline">
-              02:14
-            </a>
-            <a href="#parts" className="hidden underline-offset-4 hover:underline md:inline">
-              Parts
-            </a>
-            <a href="#rules" className="hidden underline-offset-4 hover:underline md:inline">
-              House rules
-            </a>
-            <Link
-              to="/overview"
-              className="bg-ink px-3 py-1.5 text-paper transition-opacity hover:opacity-85"
-            >
-              Open Vigil
-            </Link>
-          </nav>
-        </div>
-        <div
-          className={cn(
-            mono,
-            "flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-b border-rule py-2 text-[11px] text-ink-muted",
-          )}
-        >
-          <span>Shift 22:00 – 06:00 · on call: Dana K.</span>
-          <span
-            aria-live="polite"
-            className={cn("flex items-center gap-2 tabular-nums", st.loud && "text-signal")}
-          >
-            <span
-              className={cn("inline-block h-2 w-2", st.loud ? "animate-blink bg-signal" : "bg-ink")}
-            />
-            {hhmm(m)} — {st.label}
+    <motion.header
+      className={cn(wrap, "relative pt-5")}
+      initial={{ opacity: 0, y: -24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: EASE }}
+    >
+      <div className="flex items-center justify-between gap-4 border-b-2 border-ink pb-3">
+        <Link to="/" className="flex items-baseline gap-2">
+          <span className="condensed text-3xl font-black uppercase leading-none tracking-tight">
+            Vigil
           </span>
-        </div>
-      </motion.header>
+          <span className={cn(mono, "hidden text-[11px] text-ink-muted sm:inline")}>
+            night log no. 0412
+          </span>
+        </Link>
+        <nav className={cn(mono, "flex items-center gap-5 text-[12px]")}>
+          <a href="#shift" className="hidden underline-offset-4 hover:underline md:inline">
+            02:14
+          </a>
+          <a href="#parts" className="hidden underline-offset-4 hover:underline md:inline">
+            Parts
+          </a>
+          <a href="#rules" className="hidden underline-offset-4 hover:underline md:inline">
+            House rules
+          </a>
+          <Link
+            to="/overview"
+            className="bg-ink px-3 py-1.5 text-paper transition-opacity hover:opacity-85"
+          >
+            Open Vigil
+          </Link>
+        </nav>
+      </div>
+      <div
+        className={cn(
+          mono,
+          "flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-b border-rule py-2 text-[11px] text-ink-muted",
+        )}
+      >
+        <span>Shift 22:00 – 06:00 · on call: Dana K.</span>
+        {status}
+      </div>
+    </motion.header>
+  );
+}
 
-      {/* headline */}
-      <div className={cn(wrap, "grid gap-8 pb-10 pt-12 md:grid-cols-12 md:gap-6 md:pt-16")}>
-        <motion.h1
-          style={{ y: headY, opacity: headO }}
-          className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8"
-        >
-          <MaskLine delay={0.15}>Nothing</MaskLine>
-          <MaskLine delay={0.27}>happened</MaskLine>
-          <MaskLine delay={0.39}>last night.</MaskLine>
-        </motion.h1>
-        <FadeUp delay={0.65} className="flex flex-col justify-end md:col-span-4">
-          <p className="text-lg leading-snug text-ink md:text-[1.2rem]">
+function Hero() {
+  return (
+    <section
+      style={NIGHT_VARS}
+      className="relative isolate flex min-h-svh flex-col overflow-hidden bg-paper text-ink"
+    >
+      <TorchField className="-z-10" />
+      <Smoke
+        rgb="239,232,220"
+        intensity={0.22}
+        className="-z-10 [mask-image:linear-gradient(to_top,black_10%,transparent_75%)]"
+      />
+      {/* keep the headline legible over the wall */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_60%_at_20%_75%,var(--paper)_10%,transparent_70%)] opacity-80"
+      />
+
+      <Masthead
+        status={
+          <span className="flex items-center gap-2 tabular-nums">
+            <span className="inline-block h-2 w-2 animate-pulse-soft bg-ink" />
+            22:00 — All quiet
+          </span>
+        }
+      />
+
+      <div
+        className={cn(wrap, "grid flex-1 content-end gap-8 pb-10 pt-16 md:grid-cols-12 md:gap-6")}
+      >
+        <h1 className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8">
+          <MaskLine delay={0.2}>Nothing</MaskLine>
+          <MaskLine delay={0.32}>happened</MaskLine>
+          <MaskLine delay={0.44}>last night.</MaskLine>
+        </h1>
+        <FadeUp delay={0.75} className="flex flex-col justify-end md:col-span-4">
+          <p className="text-lg leading-snug md:text-[1.2rem]">
             Well — something did. At 02:14 payments started timing out. Vigil noticed in eleven
             seconds, woke{" "}
             <em className="not-italic underline decoration-signal decoration-2 underline-offset-4">
               exactly one person
             </em>
-            , and showed her the line that mattered. Rolled back by 02:19. Everyone else slept.
+            , and showed her the line that mattered. Everyone else slept.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link
@@ -234,56 +239,261 @@ function Night() {
               </span>
             </Link>
             <a
-              href="#inside"
+              href="#shift"
               className={cn(mono, "text-[13px] underline underline-offset-4 hover:text-ink-muted")}
             >
-              read the incident ↓
+              live through the night ↓
             </a>
           </div>
         </FadeUp>
       </div>
 
-      {/* the chart recorder */}
-      <FadeUp delay={0.9} y={32} className={wrap}>
-        <div
-          className={cn(
-            mono,
-            "flex items-end justify-between gap-4 pb-9 text-[11px] text-ink-muted",
-          )}
-        >
-          <span>
-            Fig. 1 — error rate<span className="hidden sm:inline">, all services</span>, last night
-            {scrubbing ? " · scrubbing" : ""}
+      <FadeUp
+        delay={1.3}
+        y={0}
+        className={cn(
+          wrap,
+          mono,
+          "flex items-center justify-between gap-4 border-t border-rule py-3 text-[11px] text-ink-muted",
+        )}
+      >
+        <span className="hidden sm:inline">↖ shine a light. one of these lines woke Dana.</span>
+        <span className="flex items-center gap-3">
+          scroll to start the shift
+          <span className="relative block h-6 w-px overflow-hidden bg-rule">
+            <motion.span
+              className="absolute inset-x-0 top-0 h-2 bg-ink"
+              animate={{ y: [-8, 24] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            />
           </span>
-          <button onClick={restart} className="underline-offset-4 hover:text-ink hover:underline">
-            ↺ replay
-          </button>
-        </div>
-        <Recorder m={m} setScrub={setScrub} />
+        </span>
       </FadeUp>
     </section>
   );
 }
 
-function Recorder({ m, setScrub }: { m: number; setScrub: (v: number | null) => void }) {
+/* ───────────────────────── 22:00 → 06:00 — the shift, on scroll ───────────────────────── */
+
+/** Scroll → minutes past 22:00. Fast-forwards the quiet hours, slows to real time at 02:14. */
+const SCROLL_STOPS = [0, 0.06, 0.34, 0.41, 0.71, 0.78, 0.94, 1];
+const MINUTE_STOPS = [0, 0, 240, 253, 262, 290, NIGHT, NIGHT];
+const SLOW = [253, 262] as const;
+
+const CAPTIONS: { from: number; t: string; text: ReactNode; loud?: boolean }[] = [
+  { from: 0, t: "22:00", text: "Shift starts. Eight services, all green. Dana goes to bed." },
+  { from: 95, t: "23:40", text: "checkout v412 ships. Nothing moves. Good." },
+  { from: 140, t: "00:20", text: "Hours of nothing. Vigil reads every line so nobody has to." },
+  {
+    from: 253.9,
+    t: "02:14:03",
+    text: "payments starts timing out against Stripe. 412 identical errors fold into one.",
+    loud: true,
+  },
+  {
+    from: 254.23,
+    t: "02:14:14",
+    text: "Error rate 1.3% for ten seconds. One page — to Dana. Not the channel.",
+    loud: true,
+  },
+  {
+    from: 255.67,
+    t: "02:15:40",
+    text: "Dana opens the trace on her phone. 2,700ms in stripe.charge, already highlighted.",
+  },
+  {
+    from: 257.03,
+    t: "02:17:02",
+    text: "The 01:50 deploy is pinned on the chart. Rollback v88 → v87.",
+  },
+  {
+    from: 259.5,
+    t: "02:19:30",
+    text: "Under 1%. The alert resolves itself. Nobody clicks anything.",
+  },
+  { from: 261, t: "02:21", text: "Dana goes back to sleep. The part we actually care about." },
+  { from: 432, t: "05:12", text: "Nightly batch. Expected, so silent." },
+  { from: 470, t: "06:00", text: "Shift over. One page, five minutes, eight hours of sleep." },
+];
+
+function clock(m: number, seconds: boolean) {
+  const base = hhmm(m);
+  if (!seconds) return base;
+  return (
+    <>
+      {base}
+      <span className="ml-1 align-top text-[0.32em] leading-none">
+        :{String(Math.floor((m % 1) * 60)).padStart(2, "0")}
+      </span>
+    </>
+  );
+}
+
+function Shift() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const minutes = useTransform(p, SCROLL_STOPS, MINUTE_STOPS);
+  const [m, setM] = useState(0);
+  useMotionValueEvent(minutes, "change", setM);
+
+  // Night palette until the last stretch, then dawn breaks.
+  const dawn = [0.8, 0.97];
+  const vars = {
+    "--paper": useTransform(p, dawn, [NIGHT_INK.paper, DAWN.paper]),
+    "--paper-2": useTransform(p, dawn, [NIGHT_INK.paper2, DAWN.paper2]),
+    "--ink": useTransform(p, dawn, [NIGHT_INK.ink, DAWN.ink]),
+    "--ink-muted": useTransform(p, dawn, [NIGHT_INK.muted, DAWN.muted]),
+    "--rule": useTransform(p, dawn, [NIGHT_INK.rule, DAWN.rule]),
+  };
+
+  const slow = m >= SLOW[0] && m < SLOW[1];
+  const alarm = m >= 254.23 && m < 259.5;
+  const caption = [...CAPTIONS].reverse().find((c) => m >= c.from) ?? CAPTIONS[0];
+
+  return (
+    <motion.section
+      ref={ref}
+      id="shift"
+      style={vars as unknown as MotionStyle}
+      className="relative h-[720vh] bg-paper text-ink"
+      aria-label="The night of the incident, minute by minute"
+    >
+      <div className="sticky top-0 flex h-svh flex-col overflow-hidden">
+        {/* the room goes red while the pager rings */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0 transition-opacity duration-500",
+            alarm ? "opacity-100" : "opacity-0",
+          )}
+          style={{
+            background:
+              "radial-gradient(ellipse at center, transparent 35%, color-mix(in oklab, var(--signal) 38%, transparent) 100%)",
+          }}
+        >
+          <div className="absolute inset-0 animate-pulse-soft bg-signal/[0.06]" />
+        </div>
+
+        <div className={cn(wrap, "flex flex-1 flex-col pt-6 sm:pt-10")}>
+          <div
+            className={cn(
+              mono,
+              "flex items-center justify-between gap-4 border-b border-rule pb-2 text-[11px] text-ink-muted",
+            )}
+          >
+            <span>
+              § 1 — <span className="hidden sm:inline">the night of 0412, </span>minute by minute
+            </span>
+            <span className={cn("flex items-center gap-2", slow && "text-signal")}>
+              <span
+                className={cn("inline-block h-2 w-2", slow ? "animate-blink bg-signal" : "bg-ink")}
+              />
+              {m >= NIGHT ? "end of shift" : slow ? "▶ real time" : "▶▶ fast-forward ×600"}
+            </span>
+          </div>
+
+          <div className="grid flex-1 items-center gap-6 py-6 md:grid-cols-12">
+            <p
+              className={cn(
+                "condensed num text-[clamp(5rem,19vw,17rem)] font-extrabold leading-[0.8] tracking-tight transition-colors duration-300 md:col-span-7",
+                alarm && "text-signal",
+              )}
+              aria-live="off"
+            >
+              {clock(m, slow)}
+            </p>
+            <div className="relative md:col-span-5 md:min-h-[9rem]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={caption.t}
+                  initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -14, filter: "blur(6px)" }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                >
+                  <p
+                    className={cn(
+                      mono,
+                      "text-[12px]",
+                      caption.loud ? "text-signal" : "text-ink-muted",
+                    )}
+                  >
+                    {caption.t}
+                  </p>
+                  <p className="semi-condensed mt-2 text-[clamp(1.5rem,2.6vw,2.25rem)] font-bold leading-[1.08]">
+                    {caption.text}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+              <Pager m={m} />
+            </div>
+          </div>
+
+          <div className="pb-6 sm:pb-8">
+            <Recorder m={m} />
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+/** The phone on Dana's nightstand. */
+function Pager({ m }: { m: number }) {
+  const show = m >= 254.23 && m < 262;
+  const state = m >= 259.5 ? "resolved" : m >= 255.67 ? "acked" : "ringing";
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, x: 60, rotate: 4 }}
+          animate={{ opacity: 1, x: 0, rotate: -1.5 }}
+          exit={{ opacity: 0, x: 40, rotate: 3 }}
+          transition={{ type: "spring", stiffness: 260, damping: 22 }}
+          className={cn(
+            mono,
+            "mt-4 w-[min(100%,300px)] border-2 border-ink bg-paper p-3 text-[11px] shadow-[6px_6px_0_var(--signal)] md:absolute md:-bottom-6 md:right-0 md:mt-0 md:translate-y-full",
+          )}
+          role="status"
+        >
+          <div className="flex items-center justify-between">
+            <span className="font-semibold tracking-wider">VIGIL · PAGE</span>
+            <span className="text-ink-muted">02:14:14</span>
+          </div>
+          <p className="mt-2 text-[12.5px] leading-snug">
+            <span className="text-signal">payments</span> error_rate 1.3% &gt; 1% for 10s
+          </p>
+          <p className="mt-1 text-ink-muted">→ Dana K. · payments on-call</p>
+          <div className="mt-2.5 flex items-center gap-2 border-t border-rule pt-2">
+            <span
+              className={cn(
+                "inline-block h-2 w-2",
+                state === "ringing" && "animate-blink bg-signal",
+                state === "acked" && "bg-ink",
+                state === "resolved" && "bg-ink-muted",
+              )}
+            />
+            {state === "ringing" && <span className="text-signal">ringing…</span>}
+            {state === "acked" && <span>acknowledged by Dana · 02:15:40</span>}
+            {state === "resolved" && <span className="text-ink-muted">resolved · 02:19:30</span>}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function Recorder({ m }: { m: number }) {
   const pct = (m / NIGHT) * 100;
   const passed = (at: number) => m >= at;
-  const scrubFrom = (e: React.PointerEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    setScrub(Math.max(0, Math.min(NIGHT, ((e.clientX - r.left) / r.width) * NIGHT)));
-  };
 
   return (
     <figure>
       <div
-        className="relative h-[260px] cursor-crosshair touch-pan-y select-none border-y-2 border-ink sm:h-[360px]"
-        onPointerMove={scrubFrom}
-        onPointerDown={scrubFrom}
-        onPointerLeave={() => setScrub(null)}
+        className="relative h-[22vh] min-h-[150px] select-none border-y-2 border-ink sm:h-[26vh]"
         aria-label="Error rate chart for last night. Flat except a spike between 02:14 and 02:19."
         role="img"
       >
-        {/* graph paper */}
         <svg
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="none"
@@ -302,17 +512,6 @@ function Recorder({ m, setScrub }: { m: number; setScrub: (v: number | null) => 
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {[1, 2].map((v) => (
-            <line
-              key={v}
-              x1={0}
-              x2={W}
-              y1={Y(v)}
-              y2={Y(v)}
-              stroke="var(--rule)"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
           <line
             x1={0}
             x2={W}
@@ -324,8 +523,6 @@ function Recorder({ m, setScrub }: { m: number; setScrub: (v: number | null) => 
             vectorEffect="non-scaling-stroke"
           />
         </svg>
-
-        {/* the trace, revealed up to the needle */}
         <div
           className="absolute inset-0"
           style={{ clipPath: `inset(-20px ${100 - pct}% -20px 0)` }}
@@ -356,57 +553,24 @@ function Recorder({ m, setScrub }: { m: number; setScrub: (v: number | null) => 
               d={SPIKE_PATH}
               fill="none"
               stroke="var(--signal)"
-              strokeWidth={2.2}
+              strokeWidth={2.4}
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
           </svg>
         </div>
-
-        {/* axis notes */}
         <span
           className={cn(mono, "absolute left-1.5 text-[10px] text-signal")}
           style={{ top: `calc(${(Y(1) / H) * 100}% - 16px)` }}
         >
           1% — page someone
         </span>
-        <span
-          className={cn(mono, "absolute left-1.5 text-[10px] text-ink-muted")}
-          style={{ top: `calc(${(Y(2) / H) * 100}% - 16px)` }}
-        >
-          2%
-        </span>
-        <span
-          className={cn(
-            mono,
-            "absolute bottom-1.5 right-1.5 hidden text-[10px] text-ink-muted sm:block",
-          )}
-        >
-          ···· traffic &nbsp; —— errors
-        </span>
-
-        {/* margin notes */}
-        <Note at={102} top="34%" show={passed(102)} className="hidden sm:block">
-          23:40 checkout v412 ships.
-          <br />
-          Nothing moves. Good.
+        <Note at={102} top="30%" show={passed(102)} className="hidden sm:block">
+          23:40 checkout v412
         </Note>
-        <Note at={SPIKE} top="4%" show={passed(SPIKE)} loud>
-          02:14 payments → Stripe timeouts.
-          <br />
-          Dana is paged. Only Dana.
+        <Note at={432} top="22%" show={passed(432)} flip className="hidden sm:block">
+          05:12 nightly batch
         </Note>
-        <Note at={FIXED + 3} top="40%" show={passed(FIXED + 3)}>
-          02:19 rolled back.
-          <br />
-          Back to sleep.
-        </Note>
-        <Note at={432} top="20%" show={passed(432)} flip className="hidden sm:block">
-          05:12 nightly batch.
-          <br />
-          Expected, so silent.
-        </Note>
-
         {/* needle */}
         <div
           className="pointer-events-none absolute inset-y-0 w-px bg-ink"
@@ -446,7 +610,6 @@ function Note({
   at,
   top,
   show,
-  loud,
   flip,
   className,
   children,
@@ -454,7 +617,6 @@ function Note({
   at: number;
   top: string;
   show: boolean;
-  loud?: boolean;
   flip?: boolean;
   className?: string;
   children: ReactNode;
@@ -463,9 +625,8 @@ function Note({
     <p
       className={cn(
         mono,
-        "pointer-events-none absolute whitespace-nowrap py-0.5 text-[10.5px] leading-snug transition-opacity duration-300 sm:text-[11.5px]",
+        "pointer-events-none absolute whitespace-nowrap border-ink py-0.5 text-[10.5px] text-ink transition-opacity duration-300",
         flip ? "-translate-x-full border-r pr-2 text-right" : "border-l pl-2",
-        loud ? "border-signal text-signal" : "border-ink text-ink",
         show ? "opacity-100" : "opacity-0",
         className,
       )}
@@ -502,90 +663,6 @@ function LogBand() {
         )}
       />
     </div>
-  );
-}
-
-/* ───────────────────────── § 2 — 02:14 from the inside ───────────────────────── */
-
-const ENTRIES: { t: string; src: string; line: string; note: string; loud?: boolean }[] = [
-  {
-    t: "02:14:03",
-    src: "log · payments",
-    line: "ERROR stripe timeout after 3 retries",
-    note: "First error. The next 412 identical lines fold into this one, with a counter.",
-    loud: true,
-  },
-  {
-    t: "02:14:14",
-    src: "alert",
-    line: "error_rate{svc=payments} 1.3% > 1% for 10s",
-    note: "Alert fires. One page, to the payments on-call. Not the whole channel.",
-    loud: true,
-  },
-  {
-    t: "02:15:40",
-    src: "trace · 9f2c…a1",
-    line: "POST /orders 2,912ms — 2,700ms in stripe.charge",
-    note: "Dana opens the alert on her phone. The slow span is already highlighted.",
-  },
-  {
-    t: "02:17:02",
-    src: "deploy",
-    line: "rollback payments v88 → v87",
-    note: "The 01:50 deploy is pinned right on the chart, so the question answers itself.",
-  },
-  {
-    t: "02:19:30",
-    src: "alert",
-    line: "RESOLVED error_rate{svc=payments} 0.3%",
-    note: "Under 1% for two minutes. Resolves on its own; nobody has to click anything.",
-  },
-  { t: "02:21", src: "dana", line: "back to sleep", note: "The part we actually care about." },
-];
-
-function Inside() {
-  return (
-    <section id="inside" className={cn(wrap, "scroll-mt-6 pt-24 sm:pt-32")}>
-      <SectionHead
-        n="2"
-        title="02:14, from the inside."
-        aside="Five minutes, six entries. This is the whole incident."
-      />
-      <ol className="border-t-2 border-ink">
-        {ENTRIES.map((e, i) => (
-          <motion.li
-            key={e.t}
-            initial={{ opacity: 0, x: -40, y: 0 }}
-            whileInView={{ opacity: 1, x: 0, y: 0 }}
-            viewport={{ once: true, margin: "0px 0px -8% 0px" }}
-            transition={{ duration: 0.8, ease: EASE, delay: i * 0.07 }}
-            className="grid gap-x-6 gap-y-1 border-b border-rule py-5 md:grid-cols-12 md:items-baseline"
-          >
-            <span
-              className={cn(
-                mono,
-                "text-2xl font-medium tabular-nums md:col-span-2",
-                e.loud && "text-signal",
-              )}
-            >
-              {e.t}
-            </span>
-            <span
-              className={cn(
-                mono,
-                "text-[11px] uppercase tracking-wider text-ink-muted md:col-span-2",
-              )}
-            >
-              {e.src}
-            </span>
-            <code className={cn(mono, "text-[13px] md:col-span-4", e.loud && "text-signal")}>
-              {e.line}
-            </code>
-            <span className="text-[15px] leading-snug text-ink-muted md:col-span-4">{e.note}</span>
-          </motion.li>
-        ))}
-      </ol>
-    </section>
   );
 }
 

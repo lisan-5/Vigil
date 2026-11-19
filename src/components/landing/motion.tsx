@@ -15,17 +15,25 @@ export function MaskLine({
   children,
   delay = 0,
   className,
+  play = true,
 }: {
   children: ReactNode;
   delay?: number;
   className?: string;
+  /** Hold the line hidden until this turns true. */
+  play?: boolean;
 }) {
   return (
-    <span className={cn("block overflow-hidden pb-[0.06em]", className)}>
+    <span
+      className={cn(
+        "block overflow-x-visible overflow-y-clip whitespace-nowrap pb-[0.06em]",
+        className,
+      )}
+    >
       <motion.span
         className="block will-change-transform"
         initial={{ y: "105%", rotate: 2 }}
-        animate={{ y: "0%", rotate: 0 }}
+        animate={play ? { y: "0%", rotate: 0 } : { y: "105%", rotate: 2 }}
         transition={{ duration: 1.1, ease: EASE, delay }}
       >
         {children}
@@ -38,15 +46,16 @@ export function MaskLine({
 export function FadeUp({
   delay = 0,
   y = 16,
+  play = true,
   className,
   children,
   ...rest
-}: { delay?: number; y?: number } & HTMLMotionProps<"div">) {
+}: { delay?: number; y?: number; play?: boolean } & HTMLMotionProps<"div">) {
   return (
     <motion.div
       className={className}
       initial={{ opacity: 0, y }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y }}
       transition={{ duration: 0.9, ease: EASE, delay }}
       {...rest}
     >

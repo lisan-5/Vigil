@@ -98,6 +98,7 @@
   --animate-fade-up: fade-up 220ms ease-out;
   --animate-blink: blink 1s steps(1) infinite;
   --animate-marquee: marquee 60s linear infinite;
+  --animate-glitch: glitch 0.42s steps(2, end) infinite;
 }
 
 /* Paper theme: Vigil's default — a printed night log. Warm paper, near-black ink, one signal red. */
@@ -291,6 +292,34 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+    text-shadow:
+      4px 0 var(--signal),
+      -4px 0 var(--ink);
+  }
+  25% {
+    transform: translate(-6px, 2px) skewX(-8deg);
+    clip-path: inset(8% 0 52% 0);
+  }
+  50% {
+    transform: translate(5px, -2px);
+    text-shadow:
+      -7px 0 var(--signal),
+      7px 0 var(--ink);
+    clip-path: inset(48% 0 6% 0);
+  }
+  75% {
+    transform: translate(-2px, 1px) skewX(4deg);
+    clip-path: inset(20% 0 30% 0);
+  }
+  100% {
+    transform: none;
+    text-shadow: none;
+    clip-path: none;
   }
 }
 @keyframes marquee {

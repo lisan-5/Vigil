@@ -8,9 +8,20 @@ import {
   useTransform,
   type MotionStyle,
 } from "motion/react";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { EASE, FadeUp, MaskLine, RevealLine, ScrollProgress } from "@/components/landing/motion";
 import { Grain, TorchField } from "@/components/landing/Torch";
+import { Boot } from "@/components/landing/Boot";
+import { Constellation } from "@/components/landing/Constellation";
+import { Crosshair } from "@/components/landing/Crosshair";
+import { KineticText, useKinetic } from "@/components/landing/Kinetic";
 import { ScrollSlide, Ticker } from "@/components/landing/Marquee";
 import { Smoke } from "@/components/landing/Smoke";
 import { cn } from "@/lib/utils";
@@ -111,12 +122,16 @@ const DAWN = {
 /* ───────────────────────── page ───────────────────────── */
 
 function Landing() {
+  const [ready, setReady] = useState(false);
+  const onBooted = useCallback(() => setReady(true), []);
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen overflow-x-clip bg-paper font-archivo text-ink selection:bg-signal/25">
+        <Boot onDone={onBooted} />
         <Grain />
+        <Crosshair />
         <ScrollProgress />
-        <Hero />
+        <Hero ready={ready} />
         <Shift />
         <LogBand />
         <Parts />
@@ -136,12 +151,12 @@ const mono = "font-plexmono";
 
 /* ───────────────────────── 22:00 — the hero ───────────────────────── */
 
-function Masthead({ status }: { status: ReactNode }) {
+function Masthead({ status, play = true }: { status: ReactNode; play?: boolean }) {
   return (
     <motion.header
       className={cn(wrap, "relative pt-5")}
       initial={{ opacity: 0, y: -24 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y: -24 }}
       transition={{ duration: 0.8, ease: EASE }}
     >
       <div className="flex items-center justify-between gap-4 border-b-2 border-ink pb-3">
@@ -184,13 +199,24 @@ function Masthead({ status }: { status: ReactNode }) {
   );
 }
 
-function Hero() {
+function Hero({ ready }: { ready: boolean }) {
+  const headline = useRef<HTMLHeadingElement>(null);
+  useKinetic(headline, ready);
   return (
     <section
       style={NIGHT_VARS}
       className="relative isolate flex min-h-svh flex-col overflow-hidden bg-paper text-ink"
     >
-      <TorchField className="-z-10" />
+      <TorchField className="-z-10 opacity-70" />
+      <motion.div
+        aria-hidden
+        className="absolute inset-x-0 top-[6%] -z-10 h-[56%] [mask-image:radial-gradient(closest-side,black_55%,transparent)] md:inset-x-auto md:right-[-4%] md:top-[4%] md:h-[86%] md:w-[64%]"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={ready ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+        transition={{ duration: 2.4, ease: EASE, delay: 0.3 }}
+      >
+        <Constellation />
+      </motion.div>
       <Smoke
         rgb="239,232,220"
         intensity={0.22}
@@ -203,6 +229,7 @@ function Hero() {
       />
 
       <Masthead
+        play={ready}
         status={
           <span className="flex items-center gap-2 tabular-nums">
             <span className="inline-block h-2 w-2 animate-pulse-soft bg-ink" />
@@ -214,12 +241,22 @@ function Hero() {
       <div
         className={cn(wrap, "grid flex-1 content-end gap-8 pb-10 pt-16 md:grid-cols-12 md:gap-6")}
       >
-        <h1 className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8">
-          <MaskLine delay={0.2}>Nothing</MaskLine>
-          <MaskLine delay={0.32}>happened</MaskLine>
-          <MaskLine delay={0.44}>last night.</MaskLine>
+        <h1
+          ref={headline}
+          aria-label="Nothing happened last night."
+          className="condensed text-[clamp(3.6rem,12.5vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.01em] md:col-span-8"
+        >
+          <MaskLine play={ready} delay={0.2}>
+            <KineticText text="Nothing" />
+          </MaskLine>
+          <MaskLine play={ready} delay={0.32}>
+            <KineticText text="happened" />
+          </MaskLine>
+          <MaskLine play={ready} delay={0.44}>
+            <KineticText text="last night." />
+          </MaskLine>
         </h1>
-        <FadeUp delay={0.75} className="flex flex-col justify-end md:col-span-4">
+        <FadeUp play={ready} delay={0.75} className="flex flex-col justify-end md:col-span-4">
           <p className="text-lg leading-snug md:text-[1.2rem]">
             Well — something did. At 02:14 payments started timing out. Vigil noticed in eleven
             seconds, woke{" "}
@@ -249,6 +286,7 @@ function Hero() {
       </div>
 
       <FadeUp
+        play={ready}
         delay={1.3}
         y={0}
         className={cn(
@@ -397,6 +435,7 @@ function Shift() {
               className={cn(
                 "condensed num text-[clamp(5rem,19vw,17rem)] font-extrabold leading-[0.8] tracking-tight transition-colors duration-300 md:col-span-7",
                 alarm && "text-signal",
+                m >= 254.23 && m < 254.75 && "animate-glitch",
               )}
               aria-live="off"
             >

@@ -127,7 +127,7 @@ export function TorchField({ className, rows = 56 }: { className?: string; rows?
       aria-hidden
       className={cn(
         "absolute inset-0 m-0 select-none overflow-hidden whitespace-pre font-plexmono text-[11px] leading-[19px]",
-        lit ? "text-ink/70" : "text-ink/[0.07]",
+        lit ? "text-ink/60" : "text-ink/[0.05]",
       )}
       style={
         lit
